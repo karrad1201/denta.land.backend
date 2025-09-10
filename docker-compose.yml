@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: fastapi_app
+    ports:
+      - "8082"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    healthcheck:
+      test: >
+        bash -c "
+        curl -f http://localhost:8082/health || exit 1
+        "
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    container_name: nginx
+    ports:
+      - "127.0.0.1:8841:80"
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME}
+    depends_on:
+      - app
+    restart: unless-stopped
+
+
+
+  backup:
+    image: postgres:13
+    container_name: pg_backup
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backups:/backups
+    entrypoint: >
+      bash -c "
+      apt-get update && apt-get install -y curl &&
+      while true; do
+        export PGPASSWORD=$POSTGRES_PASSWORD
+        pg_dump -h db -U $POSTGRES_USER $POSTGRES_DB | gzip > /backups/db-$(date +%F-%H-%M-%S).sql.gz
+        if [ $$? -eq 0 ]; then
+          curl -fsS -m 10 --retry 5 https://hc-ping.com/93c62d31-4937-4788-8d76-768bf77439af > /dev/null;
+        else
+          curl -fsS -m 10 --retry 5 https://hc-ping.com/93c62d31-4937-4788-8d76-768bf77439af/fail > /dev/null;
+        fi;
+        sleep 86400;
+      done"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "0.0.0.0:3001:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+
+volumes:
+  postgres_data:
+  uptime-kuma-data:

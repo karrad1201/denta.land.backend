@@ -1,0 +1,38 @@
+# Виртуальные окружения
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+build/
+dist/
+
+# Конфигурации IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Логи и файлы сессий
+logs/
+*.log
+*.sqlite3
+.env
+*.env
+
+# Тестовые данные (если есть)
+test_data/
+
+# Файлы миграций (если вы их генерируете локально)
+migrations/
+
+# Файлы сессий FastAPI / ASGI / Uvicorn
+*.pid
+*.db
+
+
+# Прочее
+*.DS_Store
+Thumbs.db

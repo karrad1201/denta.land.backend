@@ -1,0 +1,67 @@
+{
+  "endpoints": [
+    {
+      "path": "/api/auth/reg",
+      "method": "POST",
+      "tags": [
+        "authentication"
+      ],
+      "description": "Регистрация нового пользователя",
+      "request": {
+        "type": "UserInput",
+        "example": {
+          "id": 123,
+          "nickname": "john_doe",
+          "name": "John Smith",
+          "role": "patient",
+          "country": "USA",
+          "password": "securePassword123",
+          "photo_path": null
+        }
+      },
+      "response": {
+        "type": "AuthResponse",
+        "example": {
+          "status": "success",
+          "user": {
+            "id": 123,
+            "nickname": "john_doe",
+            "name": "John Smith",
+            "role": "patient",
+            "country": "USA",
+            "photo_path": null
+          }
+        }
+      }
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "tags": [
+        "authentication"
+      ],
+      "description": "Аутентификация пользователя",
+      "request": {
+        "type": "LoginData",
+        "example": {
+          "nickname": "john_doe",
+          "password": "securePassword123"
+        }
+      },
+      "response": {
+        "type": "LoginResponse",
+        "example": {
+          "user": {
+            "id": 123,
+            "nickname": "john_doe",
+            "name": "John Smith",
+            "role": "patient",
+            "country": "USA",
+            "photo_path": null
+          },
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      }
+    }
+  ]
+}
